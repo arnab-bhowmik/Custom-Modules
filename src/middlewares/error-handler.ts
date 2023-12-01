@@ -6,7 +6,8 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     if (err instanceof CustomError) {
         return res.status(err.statusCode).send({ errors: err.serializeErrors() });
     }
-
+    // To display details for any unhandled error
+    console.error(err);
     res.status(400).send({ errors: [{ message: 'Unhandled Error!' }] });
 
 };

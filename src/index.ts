@@ -11,3 +11,5 @@ export * from './middlewares/require-auth';
 export * from './middlewares/validate-request';
 
 export * from './events/types/order-status';
+export * from './events/order-created-event';
+export * from './events/order-cancelled-event';

@@ -6,15 +6,16 @@ interface Event {
   data: any;
 }
 
-export abstract class Publisher<T extends Event> {
+export abstract class Listener<T extends Event> {
   abstract subject: T['subject'];
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
 
-  constructor(public exchange: string, public key: string, public rabbitmq_username: string, public rabbitmq_password: string, public rabbitmq_k8s_service: string, public rabbitmq_k8s_service_port: number) {
+  constructor(public exchange: string, public key: string, public queue: string, public rabbitmq_username: string, public rabbitmq_password: string, public rabbitmq_k8s_service: string, public rabbitmq_k8s_service_port: number) {
     // Initialize properties  
     this.exchange                   = exchange;
     this.key                        = key;
+    this.queue                      = queue;
     this.rabbitmq_username          = rabbitmq_username;
     this.rabbitmq_password          = rabbitmq_password;
     this.rabbitmq_k8s_service       = rabbitmq_k8s_service;
@@ -26,6 +27,8 @@ export abstract class Publisher<T extends Event> {
     this.connection = await amqp.connect(rabbitmqUrl);
     this.channel = await this.connection.createChannel();
     await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
+    await this.channel.assertQueue(this.queue, { durable: true });
+    await this.channel.bindQueue(this.queue, this.exchange, this.key);
   }
 
   async closeConnection(): Promise<void> {
@@ -33,22 +36,21 @@ export abstract class Publisher<T extends Event> {
     if (this.connection) await this.connection.close();
   }
 
-  publish(data: T['data']): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!this.channel) {
-          await this.createChannel();
-        }
-        this.channel?.publish(this.exchange, this.key, Buffer.from(JSON.stringify(data)));
-        console.log(`[x] Sent ${this.key}: ${JSON.stringify(data)}`);
-        resolve();
-      } catch (err) {
-        console.log(err);
-        reject(err);
-      } finally {
-        await this.closeConnection();
+  async listen(): Promise<void> {
+    try {
+      if (!this.channel) {
+        await this.createChannel();
       }
-    });
+      this.channel?.consume(this.queue, function(msg) {
+        console.log(" [x] Received '%s'", JSON.parse(msg!.content.toString()));
+      }, { 
+        noAck: true 
+      });
+    } catch (err) {
+      console.log(err);
+    } finally {
+      await this.closeConnection();
+    }
   }
 
 }

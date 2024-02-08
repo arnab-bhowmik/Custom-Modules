@@ -40,7 +40,7 @@ export abstract class Publisher<T extends Event> {
           await this.createChannel();
         }
         this.channel?.publish(this.exchange, this.key, Buffer.from(JSON.stringify(data)));
-        console.log(`[x] Sent ${this.key}: ${JSON.stringify(data)}`);
+        console.log(`[x] Sent Event ${this.key}: ${JSON.stringify(data)}`);
         resolve();
       } catch (err) {
         console.log(err);

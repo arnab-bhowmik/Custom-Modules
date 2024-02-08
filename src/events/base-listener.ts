@@ -36,21 +36,25 @@ export abstract class Listener<T extends Event> {
     if (this.connection) await this.connection.close();
   }
 
-  async listen(): Promise<void> {
-    try {
-      if (!this.channel) {
-        await this.createChannel();
+  listen(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!this.channel) {
+          await this.createChannel();
+        }
+        this.channel?.consume(this.queue, function(msg) {
+          console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));
+        }, { 
+          noAck: true 
+        });
+        resolve();
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      } finally {
+        await this.closeConnection();
       }
-      this.channel?.consume(this.queue, function(msg) {
-        console.log(" [x] Received '%s'", JSON.parse(msg!.content.toString()));
-      }, { 
-        noAck: true 
-      });
-    } catch (err) {
-      console.log(err);
-    } finally {
-      await this.closeConnection();
-    }
+    });
   }
 
 }

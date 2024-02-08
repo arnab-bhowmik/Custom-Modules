@@ -11,17 +11,17 @@ export abstract class Publisher<T extends Event> {
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
 
-  constructor(public exchange: string, public key: string, public rabbitmq_k8s_service: string, public rabbitmq_username: string, public rabbitmq_password: string) {
+  constructor(public exchange: string, public key: string, public rabbitmq_k8s_service: string, public rabbitmq_k8s_service_port: number) {
     // Initialize properties  
-    this.exchange             = exchange;
-    this.key                  = key;
-    this.rabbitmq_k8s_service = rabbitmq_k8s_service;
-    this.rabbitmq_username    = rabbitmq_username;
-    this.rabbitmq_password    = rabbitmq_password;
+    this.exchange                   = exchange;
+    this.key                        = key;
+    this.rabbitmq_k8s_service       = rabbitmq_k8s_service;
+    this.rabbitmq_k8s_service_port  = rabbitmq_k8s_service_port;
   }
 
   async createChannel(): Promise<void> {
-    this.connection = await amqp.connect(`amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}`);
+    const rabbitmqUrl = `amqp://${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
+    this.connection = await amqp.connect(rabbitmqUrl);
     this.channel = await this.connection.createChannel();
     await this.channel.assertExchange(this.exchange, 'topic', { durable: false });
   }
@@ -35,13 +35,17 @@ export abstract class Publisher<T extends Event> {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.channel) {
-          await this.createChannel();
+          try {
+            await this.createChannel();
+          } catch (error) {
+            console.log('Failed to create Channel',error);
+          }
         }
         this.channel?.publish(this.exchange, this.key, Buffer.from(JSON.stringify(data)));
         console.log(`[x] Sent ${this.key}: ${data}`);
         resolve();
       } catch (err) {
-        console.warn(err);
+        console.log(err);
         reject(err);
       } finally {
         await this.closeConnection();

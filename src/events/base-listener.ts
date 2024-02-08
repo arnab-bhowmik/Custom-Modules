@@ -27,7 +27,7 @@ export abstract class Listener<T extends Event> {
     this.connection = await amqp.connect(rabbitmqUrl);
     this.channel = await this.connection.createChannel();
     await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
-    await this.channel.assertQueue(this.queue, { durable: true });
+    await this.channel.assertQueue(this.queue, { durable: true, arguments: { 'x-queue-type': 'quorum' } });
     await this.channel.bindQueue(this.queue, this.exchange, this.key);
   }
 

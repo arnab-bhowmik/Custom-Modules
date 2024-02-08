@@ -25,7 +25,7 @@ export abstract class Publisher<T extends Event> {
     const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
     this.connection = await amqp.connect(rabbitmqUrl);
     this.channel = await this.connection.createChannel();
-    await this.channel.assertExchange(this.exchange, 'topic', { durable: false });
+    await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
   }
 
   async closeConnection(): Promise<void> {

@@ -10,8 +10,15 @@ export abstract class Listener<T extends Event> {
   abstract subject: T['subject'];
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
+  private exchange: string;
+  private key: string;
+  private queue: string;
+  private rabbitmq_username: string;
+  private rabbitmq_password: string;
+  private rabbitmq_k8s_service: string;
+  private rabbitmq_k8s_service_port: number;
 
-  constructor(public exchange: string, public key: string, public queue: string, public rabbitmq_username: string, public rabbitmq_password: string, public rabbitmq_k8s_service: string, public rabbitmq_k8s_service_port: number) {
+  constructor(exchange: string, key: string, queue: string, rabbitmq_username: string, rabbitmq_password: string, rabbitmq_k8s_service: string, rabbitmq_k8s_service_port: number) {
     // Initialize properties  
     this.exchange                   = exchange;
     this.key                        = key;
@@ -22,12 +29,23 @@ export abstract class Listener<T extends Event> {
     this.rabbitmq_k8s_service_port  = rabbitmq_k8s_service_port;
   }
 
+  async createConnection(): Promise<void> {
+    try {
+      console.log('Connection does not exist, need to create a new one!');
+      const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
+      this.connection = await amqp.connect(rabbitmqUrl);  
+    } catch (err) {
+      console.log('Error while executing createConnection() method: ', err);
+    }
+  }
+
   async processChannel(): Promise<void> {
     try {
+      console.log('Channel does not exist, need to create a new one!');
       this.channel = await this.connection!.createChannel();
-      await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
-      await this.channel.assertQueue(this.queue, { durable: true, arguments: { 'x-queue-type': 'quorum' } });
-      await this.channel.bindQueue(this.queue, this.exchange, this.key);
+      // await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
+      // await this.channel.assertQueue(this.queue, { durable: true, arguments: { 'x-queue-type': 'quorum' } });
+      // await this.channel.bindQueue(this.queue, this.exchange, this.key);
     } catch (err) {
       console.log('Error while executing processChannel() method: ', err);
     }
@@ -50,12 +68,9 @@ export abstract class Listener<T extends Event> {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.connection) {
-          console.log('Connection does not exist, need to create a new one!');
-          const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
-          this.connection = await amqp.connect(rabbitmqUrl);
+          await this.createConnection();
         }
         if (!this.channel) {
-          console.log('Channel does not exist, need to create a new one!');
           await this.processChannel();
         }
         this.channel!.consume(this.queue, function(msg) {
@@ -67,8 +82,6 @@ export abstract class Listener<T extends Event> {
       } catch (err) {
         console.log('Error while executing listen() method: ', err);
         reject(err);
-      // } finally {
-      //   await this.closeConnection();
       }
     });
   }

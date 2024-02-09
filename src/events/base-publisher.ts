@@ -11,16 +11,16 @@ export abstract class Publisher<T extends Event> {
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
   private exchange: string;
-  private key: string;
+  private routingKey: string;
   private rabbitmq_username: string;
   private rabbitmq_password: string;
   private rabbitmq_k8s_service: string;
   private rabbitmq_k8s_service_port: number;
 
-  constructor(exchange: string, key: string, rabbitmq_username: string, rabbitmq_password: string, rabbitmq_k8s_service: string, rabbitmq_k8s_service_port: number) {
+  constructor(exchange: string, routingKey: string, rabbitmq_username: string, rabbitmq_password: string, rabbitmq_k8s_service: string, rabbitmq_k8s_service_port: number) {
     // Initialize properties  
     this.exchange                   = exchange;
-    this.key                        = key;
+    this.routingKey                 = routingKey;
     this.rabbitmq_username          = rabbitmq_username;
     this.rabbitmq_password          = rabbitmq_password;
     this.rabbitmq_k8s_service       = rabbitmq_k8s_service;
@@ -40,8 +40,7 @@ export abstract class Publisher<T extends Event> {
   async processChannel(): Promise<void> {
     try {
       console.log('Channel does not exist, need to create a new one!');
-      this.channel = await this.connection!.createChannel();
-      // await this.channel.assertExchange(this.exchange, 'topic', { durable: true });     
+      this.channel = await this.connection!.createChannel();    
     } catch (err) {
       console.log('Error while executing processChannel() method: ', err);
     }
@@ -69,8 +68,8 @@ export abstract class Publisher<T extends Event> {
         if (!this.channel) {
           await this.processChannel();
         }
-        this.channel!.publish(this.exchange, this.key, Buffer.from(JSON.stringify(data)));
-        console.log(`[x] Sent Event ${this.key}: ${JSON.stringify(data)}`);
+        this.channel!.publish(this.exchange, this.routingKey, Buffer.from(JSON.stringify(data)));
+        console.log(`[x] Sent Event ${this.routingKey}: ${JSON.stringify(data)}`);
         resolve();
       } catch (err) {
         console.log('Error while executing publish() method: ', err);

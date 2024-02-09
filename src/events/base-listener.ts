@@ -36,25 +36,26 @@ export abstract class Listener<T extends Event> {
   //   }
   // }
 
-  async processChannel(): Promise<void> {
+  async openChannel(): Promise<void> {
     try {
-      console.log('Channel does not exist, need to create a new one!');
+      console.log('Creating a new RabbitMQ channel!');
       this.channel = await this.connection!.createChannel();
     } catch (err) {
-      console.log('Error while executing processChannel() method: ', err);
+      console.log('Error while creating a new RabbitMQ channel: ', err);
     }
   }
 
-  async closeConnection(): Promise<void> {
+  async closeChannel(): Promise<void> {
     try {
+      console.log('Closing the RabbitMQ connection!');
       if (this.channel) {
         await this.channel.close();
       }
-      if (this.connection) {
-        await this.connection.close();
-      }     
+      // if (this.connection) {
+      //   await this.connection.close();
+      // }     
     } catch (err) {
-      console.log('Error while executing closeConnection() method: ', err);
+      console.log('Error while closing the RabbitMQ channel: ', err);
     }
   }
 
@@ -65,7 +66,7 @@ export abstract class Listener<T extends Event> {
         //   await this.createConnection();
         // }
         if (!this.channel) {
-          await this.processChannel();
+          await this.openChannel();
         }
         this.channel!.consume(this.queue, function(msg) {
           console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));

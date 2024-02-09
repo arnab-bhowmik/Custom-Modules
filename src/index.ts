@@ -10,6 +10,7 @@ export * from './middlewares/error-handler';
 export * from './middlewares/require-auth';
 export * from './middlewares/validate-request';
 
+export * from './events/rabbitmq-connection';
 export * from './events/base-publisher';
 export * from './events/base-listener';
 export * from './events/subjects';

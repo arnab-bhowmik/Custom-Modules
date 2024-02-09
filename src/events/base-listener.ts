@@ -22,37 +22,53 @@ export abstract class Listener<T extends Event> {
     this.rabbitmq_k8s_service_port  = rabbitmq_k8s_service_port;
   }
 
-  async createChannel(): Promise<void> {
-    const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
-    this.connection = await amqp.connect(rabbitmqUrl);
-    this.channel = await this.connection.createChannel();
-    await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
-    await this.channel.assertQueue(this.queue, { durable: true, arguments: { 'x-queue-type': 'quorum' } });
-    await this.channel.bindQueue(this.queue, this.exchange, this.key);
+  async processChannel(): Promise<void> {
+    try {
+      this.channel = await this.connection!.createChannel();
+      await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
+      await this.channel.assertQueue(this.queue, { durable: true, arguments: { 'x-queue-type': 'quorum' } });
+      await this.channel.bindQueue(this.queue, this.exchange, this.key);
+    } catch (err) {
+      console.log('Error while executing processChannel() method: ', err);
+    }
   }
 
   async closeConnection(): Promise<void> {
-    if (this.channel) await this.channel.close();
-    if (this.connection) await this.connection.close();
+    try {
+      if (this.channel) {
+        await this.channel.close();
+      }
+      if (this.connection) {
+        await this.connection.close();
+      }     
+    } catch (err) {
+      console.log('Error while executing closeConnection() method: ', err);
+    }
   }
 
   listen(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        if (!this.channel) {
-          await this.createChannel();
+        if (!this.connection) {
+          console.log('Connection does not exist, need to create a new one!');
+          const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
+          this.connection = await amqp.connect(rabbitmqUrl);
         }
-        this.channel?.consume(this.queue, function(msg) {
+        if (!this.channel) {
+          console.log('Channel does not exist, need to create a new one!');
+          await this.processChannel();
+        }
+        this.channel!.consume(this.queue, function(msg) {
           console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));
         }, { 
           noAck: true 
         });
         resolve();
       } catch (err) {
-        console.log(err);
+        console.log('Error while executing listen() method: ', err);
         reject(err);
-      } finally {
-        await this.closeConnection();
+      // } finally {
+      //   await this.closeConnection();
       }
     });
   }

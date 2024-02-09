@@ -21,32 +21,48 @@ export abstract class Publisher<T extends Event> {
     this.rabbitmq_k8s_service_port  = rabbitmq_k8s_service_port;
   }
 
-  async createChannel(): Promise<void> {
-    const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
-    this.connection = await amqp.connect(rabbitmqUrl);
-    this.channel = await this.connection.createChannel();
-    await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
+  async processChannel(): Promise<void> {
+    try {
+      this.channel = await this.connection!.createChannel();
+      await this.channel.assertExchange(this.exchange, 'topic', { durable: true });     
+    } catch (err) {
+      console.log('Error while executing processChannel() method: ', err);
+    }
   }
 
   async closeConnection(): Promise<void> {
-    if (this.channel) await this.channel.close();
-    if (this.connection) await this.connection.close();
+    try {
+      if (this.channel) {
+        await this.channel.close();
+      }
+      if (this.connection) {
+        await this.connection.close();
+      }     
+    } catch (err) {
+      console.log('Error while executing closeConnection() method: ', err);
+    }
   }
 
   publish(data: T['data']): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        if (!this.channel) {
-          await this.createChannel();
+        if (!this.connection) {
+          console.log('Connection does not exist, need to create a new one!');
+          const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
+          this.connection = await amqp.connect(rabbitmqUrl);
         }
-        this.channel?.publish(this.exchange, this.key, Buffer.from(JSON.stringify(data)));
+        if (!this.channel) {
+          console.log('Channel does not exist, need to create a new one!');
+          await this.processChannel();
+        }
+        this.channel!.publish(this.exchange, this.key, Buffer.from(JSON.stringify(data)));
         console.log(`[x] Sent Event ${this.key}: ${JSON.stringify(data)}`);
         resolve();
       } catch (err) {
-        console.log(err);
+        console.log('Error while executing publish() method: ', err);
         reject(err);
-      } finally {
-        await this.closeConnection();
+      // } finally {
+      //   await this.closeConnection();
       }
     });
   }

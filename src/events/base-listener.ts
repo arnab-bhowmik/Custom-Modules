@@ -44,18 +44,18 @@ export abstract class Listener<T extends Event> {
         if (!this.channel) {
           await this.openChannel();
         }
-        // let eventData;
+        let eventData;
         this.channel!.consume(this.queue, function(msg) {
-          console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));
-          // if (msg) { 
-          //   eventData = JSON.parse(msg!.content.toString());
-          // }
+          // console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));
+          if (msg) { 
+            eventData = JSON.parse(msg!.content.toString());
+          }
         }, { 
           noAck: true 
         });
-        // if (eventData) {
-        //   console.log(`[x] Received Event ${this.subject}: ${eventData}`);
-        // }
+        if (eventData) {
+          console.log(`[x] Received Event ${this.subject}: ${eventData}`);
+        }
         resolve();
       } catch (err) {
         console.log('Error while executing listen() method: ', err);

@@ -46,8 +46,7 @@ export abstract class Listener<T extends Event> {
         }
         let eventName = this.subject;
         this.channel!.consume(this.queue, function(msg) {
-          console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));
-          console.log(`[x] Received Event ${eventName}: ${JSON.parse(msg!.content.toString())}`);
+          console.log(`[x] Received Event ${eventName}, ${msg!.content.toString()}`);
         }, { 
           noAck: true 
         });

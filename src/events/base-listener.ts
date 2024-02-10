@@ -11,30 +11,12 @@ export abstract class Listener<T extends Event> {
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
   private queue: string;
-  // private rabbitmq_username: string;
-  // private rabbitmq_password: string;
-  // private rabbitmq_k8s_service: string;
-  // private rabbitmq_k8s_service_port: number;
 
   constructor(connection: amqp.Connection, queue: string) {
     // Initialize properties
     this.connection = connection;
     this.queue      = queue;
-    // this.rabbitmq_username          = rabbitmq_username;
-    // this.rabbitmq_password          = rabbitmq_password;
-    // this.rabbitmq_k8s_service       = rabbitmq_k8s_service;
-    // this.rabbitmq_k8s_service_port  = rabbitmq_k8s_service_port;
   }
-
-  // async createConnection(): Promise<void> {
-  //   try {
-  //     console.log('Connection does not exist, need to create a new one!');
-  //     const rabbitmqUrl = `amqp://${this.rabbitmq_username}:${this.rabbitmq_password}@${this.rabbitmq_k8s_service}:${this.rabbitmq_k8s_service_port}`;
-  //     this.connection = await amqp.connect(rabbitmqUrl);  
-  //   } catch (err) {
-  //     console.log('Error while executing createConnection() method: ', err);
-  //   }
-  // }
 
   async openChannel(): Promise<void> {
     try {
@@ -47,13 +29,10 @@ export abstract class Listener<T extends Event> {
 
   async closeChannel(): Promise<void> {
     try {
-      console.log('Closing the RabbitMQ connection!');
+      console.log('Closing the RabbitMQ channel!');
       if (this.channel) {
         await this.channel.close();
-      }
-      // if (this.connection) {
-      //   await this.connection.close();
-      // }     
+      }     
     } catch (err) {
       console.log('Error while closing the RabbitMQ channel: ', err);
     }
@@ -62,17 +41,16 @@ export abstract class Listener<T extends Event> {
   listen(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        // if (!this.connection) {
-        //   await this.createConnection();
-        // }
         if (!this.channel) {
           await this.openChannel();
         }
+        let eventData;
         this.channel!.consume(this.queue, function(msg) {
-          console.log("[x] Received Event Data '%s'", JSON.parse(msg!.content.toString()));
+          if (msg) { eventData = JSON.parse(msg!.content.toString()); }
         }, { 
           noAck: true 
         });
+        console.log(`[x] Received Event ${this.subject}: ${eventData}`);
         resolve();
       } catch (err) {
         console.log('Error while executing listen() method: ', err);

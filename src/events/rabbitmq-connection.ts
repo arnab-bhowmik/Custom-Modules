@@ -1,9 +1,9 @@
 import amqp from 'amqplib';
 
-export const openRabbitMQConnection = async (rabbitmqUsername: string, rabbitmqPassword: string, rabbitmqService: string, rabbitmqServicePort: number) => {
+export const openRabbitMQConnection = async (rabbitmqUsername: string, rabbitmqPassword: string, rabbitmqService: string) => {
     try {
         console.log('Creating a new RabbitMQ connection!');
-        const rabbitmqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqService}:${rabbitmqServicePort}`;
+        const rabbitmqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqService}`;
         const connection = await amqp.connect(rabbitmqUrl);
         return connection;
     } catch (err) {

@@ -8,16 +8,15 @@ interface Event {
 
 export abstract class Publisher<T extends Event> {
   abstract subject: T['subject'];
+  abstract routingKey: string;
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
   private exchange: string;
-  private routingKey: string;
 
-  constructor(connection: amqp.Connection, exchange: string, routingKey: string) {
+  constructor(connection: amqp.Connection, exchange: string) {
     // Initialize properties 
     this.connection = connection; 
     this.exchange   = exchange;
-    this.routingKey = routingKey;
   }
 
   async openChannel(): Promise<void> {

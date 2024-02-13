@@ -57,8 +57,8 @@ export abstract class Listener<T extends Event> {
             console.log(`[x] Received Event ${eventName}, ${msg!.content.toString()}`);
             channel.ack(msg!);
           } else {
-            console.log(`[x] Listener corresponds to Event ${eventName} but the Event message is of type ${msg!.properties.type}`);
-            console.log(`[x] Event will be picked up by any other available listeners and will get processed if listener type is ${msg!.properties.type}`);
+            console.log(`[x] Listener corresponds to Event ${eventName} but the Event message is of type ${msg!.properties.type.toString()}`);
+            console.log(`[x] Event will be picked up by any other available listeners and will get processed if listener type is ${msg!.properties.type.toString()}`);
           }
         }, { 
           noAck: false

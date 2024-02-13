@@ -8,7 +8,7 @@ interface Event {
 
 export abstract class Listener<T extends Event> {
   abstract subject: T['subject'];
-  abstract onMessage(data: T['data']): boolean;
+  abstract onMessage(data: T['data']): Promise<boolean>;
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
   private queue: string;

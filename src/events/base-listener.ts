@@ -8,7 +8,7 @@ interface Event {
 
 export abstract class Listener<T extends Event> {
   abstract subject: T['subject'];
-  abstract onMessage(data: T['data']): Promise<boolean>;
+  abstract processMessage(data: T['data'], msg: amqp.ConsumeMessage): Promise<boolean>;
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
   private queue: string;
@@ -48,12 +48,12 @@ export abstract class Listener<T extends Event> {
         // Instantiating the following attributes for use within the channel.consume() method as this.{attribute} won't work 
         let eventName = this.subject;
         let channel   = this.channel!;
-        let onMessage = this.onMessage;
+        let processMessage = this.processMessage;
         this.channel!.consume(this.queue, async function(msg) {
-          // Invoke the onMessage() method implementation specific to the event listener processing the message
+          // Invoke the processMessage() method implementation specific to the event listener processing the message
           const eventData = JSON.parse(msg!.content.toString());
-          const processMessage = await onMessage(eventData);
-          if (processMessage) {
+          const messageProcessed = await processMessage(eventData, msg!);
+          if (messageProcessed) {
             console.log(`[x] Received Event ${eventName}, ${msg!.content.toString()}`);
             channel.ack(msg!);
           } else {

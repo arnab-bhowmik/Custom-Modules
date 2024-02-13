@@ -45,18 +45,20 @@ export abstract class Listener<T extends Event> {
         if (!this.channel) {
           await this.openChannel();
         }
+        // Instantiating the following attributes for use within the channel.consume() method as this.{attribute} won't work 
         let eventName = this.subject;
         let channel   = this.channel!;
         let onMessage = this.onMessage;
-        this.channel!.consume(this.queue, function(msg) {
-          // Invoke the abstract onMessage() method implementation specific to the event
+        this.channel!.consume(this.queue, async function(msg) {
+          // Invoke the onMessage() method implementation specific to the event listener processing the message
           const eventData = JSON.parse(msg!.content.toString());
-          const processMessage = onMessage(eventData);
+          const processMessage = await onMessage(eventData);
           if (processMessage) {
             console.log(`[x] Received Event ${eventName}, ${msg!.content.toString()}`);
             channel.ack(msg!);
           } else {
             console.log(`[x] Listener corresponds to Event ${eventName} but the Event message is of type ${msg!.properties.type}`);
+            console.log(`[x] Event will be picked up by any other available listeners and will get processed if listener type is ${msg!.properties.type}`);
           }
         }, { 
           noAck: false

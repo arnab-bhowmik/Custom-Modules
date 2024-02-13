@@ -45,7 +45,7 @@ export abstract class Publisher<T extends Event> {
         if (!this.channel) {
           await this.openChannel();
         }
-        this.channel!.publish(this.exchange, this.routingKey, Buffer.from(JSON.stringify(data)));
+        this.channel!.publish(this.exchange, this.routingKey, Buffer.from(JSON.stringify(data)), { type: this.subject });
         console.log(`[x] Published Event ${this.subject}, ${JSON.stringify(data)}`);
         resolve();
       } catch (err) {

@@ -8,6 +8,7 @@ interface Event {
 
 export abstract class Listener<T extends Event> {
   abstract subject: T['subject'];
+  abstract onMessage(data: T['data']): void;
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
   private queue: string;
@@ -45,10 +46,16 @@ export abstract class Listener<T extends Event> {
           await this.openChannel();
         }
         let eventName = this.subject;
+        let channel   = this.channel!;
+        let onMessage = this.onMessage;
         this.channel!.consume(this.queue, function(msg) {
           console.log(`[x] Received Event ${eventName}, ${msg!.content.toString()}`);
+          // Invoke the abstract onMessage() method implementation specific to the event
+          const eventData = JSON.parse(msg!.content.toString());
+          onMessage(eventData);
+          channel.ack(msg!);
         }, { 
-          noAck: true 
+          noAck: false
         });
         resolve();
       } catch (err) {

@@ -3,7 +3,8 @@ import amqp from 'amqplib';
 export const openRabbitMQConnection = async (rabbitmqUsername: string, rabbitmqPassword: string, rabbitmqService: string) => {
     try {
         console.log('Creating a new RabbitMQ connection!');
-        const rabbitmqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqService}`;
+        const vhost = 'ticketing-app-vhost';
+        const rabbitmqUrl = `amqp://${rabbitmqUsername}:${rabbitmqPassword}@${rabbitmqService}/${vhost}`;
         const connection = await amqp.connect(rabbitmqUrl);
         return connection;
     } catch (err) {

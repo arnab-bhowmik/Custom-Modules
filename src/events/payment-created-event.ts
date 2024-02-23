@@ -4,7 +4,7 @@ export interface PaymentCreatedEvent {
   subject: Subjects.PaymentCreated;
   data: {
     id: string;
-    stripeId: string;
+    rzpPaymentId: string;
     orderId: string;
     version: number;
   };

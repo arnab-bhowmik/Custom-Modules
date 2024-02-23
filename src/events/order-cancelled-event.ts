@@ -9,6 +9,7 @@ export interface OrderCancelledEvent {
         userId:     string;
         status:     OrderStatus;
         expiresAt:  string;
+        rzpOrderId: string;
         ticket:     {
             id:     string;
             price:  number;

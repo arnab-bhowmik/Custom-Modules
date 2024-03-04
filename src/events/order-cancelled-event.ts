@@ -12,6 +12,7 @@ export interface OrderCancelledEvent {
         rzpOrderId: string;
         ticket:     {
             id:     string;
+            title:  string;
             price:  number;
         }
     }

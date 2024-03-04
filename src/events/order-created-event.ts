@@ -12,6 +12,7 @@ export interface OrderCreatedEvent {
         rzpOrderId: string;
         ticket:     {
             id:     string;
+            title:  string;
             price:  number;
         }
     }

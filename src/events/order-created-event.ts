@@ -17,6 +17,7 @@ export interface OrderCreatedEvent {
             price:      number;
             userId:     string;
             userEmail:  string;
+            version:    number;
         }
     }
 }

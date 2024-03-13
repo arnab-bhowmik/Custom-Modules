@@ -17,6 +17,7 @@ export interface OrderCancelledEvent {
             price:      number;
             userId:     string;
             userEmail:  string;
+            version:    number;
         }
     }
 }

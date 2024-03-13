@@ -12,9 +12,11 @@ export interface OrderCreatedEvent {
         expiresAt:  string;
         rzpOrderId: string;
         ticket:     {
-            id:     string;
-            title:  string;
-            price:  number;
+            id:         string;
+            title:      string;
+            price:      number;
+            userId:     string;
+            userEmail:  string;
         }
     }
 }

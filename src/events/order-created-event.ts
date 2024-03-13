@@ -7,6 +7,7 @@ export interface OrderCreatedEvent {
         id:         string;
         version:    number;
         userId:     string;
+        userEmail:  string;
         status:     OrderStatus;
         expiresAt:  string;
         rzpOrderId: string;
